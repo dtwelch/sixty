@@ -14,13 +14,18 @@ module Lexer (
 
 import qualified Data.Char as Char
 import Data.Coerce
+
+import Debug.Trace
+
 import Data.Text.Array (Array)
+
+import qualified Data.Text as Txt
 import qualified Data.Text.Array as Array
 import qualified Data.Text.Internal as Text
 import qualified Data.Text.Internal.Encoding.Utf16 as Utf16
 import qualified Data.Text.Internal.Unsafe.Char as Char
 import qualified Position
-import Protolude hiding (State, ord, state)
+import Protolude hiding (State, ord, state, trace)
 import qualified Span
 import qualified UTF16
 
@@ -89,6 +94,9 @@ displayToken token =
     RightImplicitBrace -> "}"
     Error -> "[error]"
 
+lexText' :: [Char] -> TokenList
+lexText' str = lexText (Txt.pack str)
+
 lexText :: Text -> TokenList
 lexText (Text.Text array offset length_) =
   lex
@@ -99,6 +107,13 @@ lexText (Text.Text array offset length_) =
       , end = coerce $ offset + length_
       }
 
+bobreverse :: [Char] -> [Char]
+bobreverse x = trace ("DEBUG: bobreverse" ++ show x) (reverse ("bob" ++ x))
+
+-- >>> bobreverse "jill"
+-- "llijbob"
+
+
 -------------------------------------------------------------------------------
 
 data State = State
@@ -107,6 +122,14 @@ data State = State
   , lineColumn :: !Position.LineColumn
   , end :: !Position.Absolute
   }
+
+--instance Show Array where
+--  show x =
+--    "arraytext"
+
+stateRender :: State -> [Char]
+stateRender (State _ pos lineCol end) =
+  "State(<input>, " ++ show pos ++ ", " ++ show lineCol ++ ", " ++ show end ++ ")"
 
 lex :: State -> TokenList
 lex state@State {..}
@@ -133,24 +156,27 @@ lex state@State {..}
         -------------------------------------------------------------------------
         -- Whitespace
         [UTF16.unit1| |] ->
-          lex state1
+          trace ("[lex: lexing whitespace .. " ++ stateRender state ++ "]") (lex state1)
         [UTF16.unit1|	|] ->
           lex state1
+
         [UTF16.unit1|
 |] ->
             lex state1 {lineColumn = Position.addLine lineColumn}
         -------------------------------------------------------------------------
-        -- Number
+        -- Number (NOTE: I think he meant 'lambda' here -dtw)
         [UTF16.unit1|\|] ->
           token1 Lambda $ lex state1
         -------------------------------------------------------------------------
         -- Number
-        [UTF16.unit1|-|]
+        -- 'guarded patterns' below.. see:
+        -- https://stackoverflow.com/questions/46509876/what-does-a-comma-in-the-guard-syntax-do)
+        [UTF16.unit1|-|] -- unary minus
           | position1 < end
           , c <- index input position1
           , isNumeric c ->
               number position lineColumn state2 True (fromIntegral $ c - [UTF16.unit1|0|])
-        c
+        c -- or just a num c
           | isNumeric c ->
               number position lineColumn state1 False (fromIntegral $ c - [UTF16.unit1|0|])
         -------------------------------------------------------------------------
@@ -165,7 +191,8 @@ lex state@State {..}
         -- Operator or identifier
         c
           | isASCIIIdentifierStart c ->
-              identifier position lineColumn state1
+              trace ("[lex:lexing identifier " ++ stateRender state ++ "]") (identifier position lineColumn state1)
+
         c
           | isASCIIOperator c ->
               operator position lineColumn state1
@@ -225,7 +252,6 @@ lex state@State {..}
       Token lineColumn $ Span.Absolute position position2
 
 -------------------------------------------------------------------------------
-
 index :: Array -> Position.Absolute -> Word16
 index =
   coerce Array.unsafeIndex
@@ -276,6 +302,7 @@ isASCIIOperator c =
 
 -------------------------------------------------------------------------------
 
+-- i.e.: identifierOrReservedWordToken
 identifier
   :: Position.Absolute
   -> Position.LineColumn
@@ -283,25 +310,30 @@ identifier
   -> TokenList
 identifier !startPosition !startLineColumn state@State {..}
   | position >= end =
-      identifierToken input startPosition startLineColumn position Empty
+      trace ("[identifier: lexing identifier/keyword " ++ stateRender state ++ "]") 
+            (identifierToken input startPosition startLineColumn position Empty)
   | otherwise =
       case index input position of
         c
           | isASCIIIdentifierCont c ->
+              trace ("[identifier: lex id continue " ++ stateRender state ++ "]") 
               identifier startPosition startLineColumn state1
         [UTF16.unit1|.|] ->
           dotIdentifier startPosition startLineColumn position lineColumn state1
         c
           | Utf16.validate1 c
           , Char.isAlpha $ Char.unsafeChr c ->
+              trace ("[identifier (isAlpha) " ++ stateRender state ++ "]") 
               identifier startPosition startLineColumn state1
         c1
           | position1 < end
           , c2 <- index input position1
           , Utf16.validate2 c1 c2
           , Char.isAlpha $ Utf16.chr2 c1 c2 ->
+              trace ("[identifier (c1 c2 case) " ++ stateRender state ++ "]") 
               identifier startPosition startLineColumn state2
         _ ->
+          trace ("[ident or keyword case " ++ stateRender state ++ "]") 
           identifierToken input startPosition startLineColumn position $
             lex state
   where
@@ -402,6 +434,9 @@ identifierToken !input !startPosition !startLineColumn !position =
   Token startLineColumn (Span.Absolute startPosition position) $
     case index input startPosition of
       [UTF16.unit1|_|] | len == 1 -> Underscore
+
+      -- note: thinking the "let" <- stuff is just to say explicitly in the
+      -- code what we're matching
       [UTF16.unit1|l|] | "let" <- str -> Let
       [UTF16.unit1|i|] | "in" <- str -> In
       [UTF16.unit1|d|] | "data" <- str -> Data
@@ -418,7 +453,7 @@ identifierToken !input !startPosition !startLineColumn !position =
       Text.Text
         input
         (coerce startPosition)
-        (coerce position - coerce startPosition)
+        (coerce position - coerce startPosition) -- just giving us what str.length will in scala.. (other than perhaps the index) -dtw
 
 -------------------------------------------------------------------------------
 
