@@ -1,7 +1,7 @@
 RELEASE ?= 0
 STACK := stack
 STACK_BENCH := $(STACK) build --bench --test --no-run-tests
-STACK_TEST := $(STACK) build --bench --test --no-run-benchmarks
+STACK_TEST := $(STACK) build --no-run-benchmarks
 ifneq ($(RELEASE), 1)
   STACK_TEST += --fast
 endif
