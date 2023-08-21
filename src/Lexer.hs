@@ -308,7 +308,7 @@ identifier
   -> TokenList
 identifier !startPosition !startLineColumn state@State {..}
   | position >= end =
-      trace ("[identifier: lexing identifier/keyword " ++ stateRender state ++ "]") 
+      trace ("[identifier: lexing identifier/keyword (end) " ++ stateRender state ++ "]") 
             (identifierToken input startPosition startLineColumn position Empty)
   | otherwise =
       case index input position of
