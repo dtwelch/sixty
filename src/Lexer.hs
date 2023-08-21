@@ -107,12 +107,10 @@ lexText (Text.Text array offset length_) =
       , end = coerce $ offset + length_
       }
 
-bobreverse :: [Char] -> [Char]
-bobreverse x = trace ("DEBUG: bobreverse" ++ show x) (reverse ("bob" ++ x))
+txt2Array :: Text -> Array 
+txt2Array (Text.Text array _ _) = array
 
--- >>> bobreverse "jill"
--- "llijbob"
-
+-- >>> Text.Text (txt2Array (Txt.pack "moo")) 0 5
 
 -------------------------------------------------------------------------------
 
@@ -191,7 +189,7 @@ lex state@State {..}
         -- Operator or identifier
         c
           | isASCIIIdentifierStart c ->
-              trace ("[lex:lexing identifier " ++ stateRender state ++ "]") (identifier position lineColumn state1)
+              trace ("[lex: lexing identifier .. " ++ stateRender state ++ "]") (identifier position lineColumn state1)
 
         c
           | isASCIIOperator c ->
@@ -333,7 +331,7 @@ identifier !startPosition !startLineColumn state@State {..}
               trace ("[identifier (c1 c2 case) " ++ stateRender state ++ "]") 
               identifier startPosition startLineColumn state2
         _ ->
-          trace ("[ident or keyword case " ++ stateRender state ++ "]") 
+          trace ("[identifier: identifier/keyword (default) " ++ stateRender state ++ "]") 
           identifierToken input startPosition startLineColumn position $
             lex state
   where
@@ -423,6 +421,7 @@ dotIdentifier !startPosition !startLineColumn !dotPosition !dotLineColumn state@
     position2 =
       Position.add position 2
 
+
 identifierToken
   :: Array
   -> Position.Absolute
@@ -454,6 +453,9 @@ identifierToken !input !startPosition !startLineColumn !position =
         input
         (coerce startPosition)
         (coerce position - coerce startPosition) -- just giving us what str.length will in scala.. (other than perhaps the index) -dtw
+
+-- >>> Text.Text (txt2Array (Txt.pack " true")) 1 (5 - 1)
+-- "true"
 
 -------------------------------------------------------------------------------
 
