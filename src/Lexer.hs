@@ -132,7 +132,7 @@ stateRender (State _ pos lineCol end) =
 lex :: State -> TokenList
 lex state@State {..}
   | position >= end =
-      Empty
+      trace ("[lex: empty " ++ stateRender state ++ "]") Empty
   | otherwise =
       case index input position of
         -------------------------------------------------------------------------
@@ -199,27 +199,27 @@ lex state@State {..}
           , Utf16.validate1 c
           , c' <- Char.unsafeChr c
           , Char.isAlpha c' ->
-              identifier position lineColumn state1
+             trace ("HERE1 ") identifier position lineColumn state1
         c
           | c >= 128
           , Utf16.validate1 c
           , c' <- Char.unsafeChr c
           , Char.isSymbol c' || Char.isPunctuation c' ->
-              operator position lineColumn state1
+              trace ("HERE1 ")  operator position lineColumn state1
         c1
           | position1 < end
           , c2 <- index input position1
           , Utf16.validate2 c1 c2
           , c <- Utf16.chr2 c1 c2
           , Char.isAlpha c ->
-              identifier position lineColumn state2
+              trace ("HERE1 ") identifier position lineColumn state2
         c1
           | position1 < end
           , c2 <- index input position1
           , Utf16.validate2 c1 c2
           , c <- Utf16.chr2 c1 c2
           , Char.isSymbol c || Char.isPunctuation c ->
-              operator position lineColumn state2
+              trace ("HERE1 ")  operator position lineColumn state2
         -------------------------------------------------------------------------
         -- Error
         _ ->
@@ -331,7 +331,7 @@ identifier !startPosition !startLineColumn state@State {..}
               trace ("[identifier (c1 c2 case) " ++ stateRender state ++ "]") 
               identifier startPosition startLineColumn state2
         _ ->
-          trace ("[identifier: identifier/keyword (default) " ++ stateRender state ++ "]") 
+          trace ("[identifier: id/keyword (default) " ++ stateRender state ++ "]") 
           identifierToken input startPosition startLineColumn position $
             lex state
   where
