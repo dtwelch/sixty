@@ -94,6 +94,9 @@ displayToken token =
     RightImplicitBrace -> "}"
     Error -> "[error]"
 
+-- >>> lexText' (" moo ")
+-- Token (LineColumn 0 1) (Absolute (Absolute 1) (Absolute 4)) (Identifier "moo") Empty
+
 lexText' :: [Char] -> TokenList
 lexText' str = lexText (Txt.pack str)
 
@@ -154,13 +157,14 @@ lex state@State {..}
         -------------------------------------------------------------------------
         -- Whitespace
         [UTF16.unit1| |] ->
-          trace ("[lex: lexing whitespace .. " ++ stateRender state ++ "]") (lex state1)
+          trace ("[lex: lexing whitespace .. " ++ stateRender state1 ++ "]") (lex state1)
         [UTF16.unit1|	|] ->
-          lex state1
+          trace ("[lex: lexing weird whitespace .. " ++ stateRender state1 ++ "]") 
+          (lex state1)
 
         [UTF16.unit1|
 |] ->
-            lex state1 {lineColumn = Position.addLine lineColumn}
+            trace ("[lex: lexing newln whitespace .. " ++ stateRender state1 ++ "]") (lex state1 {lineColumn = Position.addLine lineColumn})
         -------------------------------------------------------------------------
         -- Number (NOTE: I think he meant 'lambda' here -dtw)
         [UTF16.unit1|\|] ->
@@ -193,7 +197,7 @@ lex state@State {..}
 
         c
           | isASCIIOperator c ->
-              operator position lineColumn state1
+              trace ("[lex: lexing operator .. " ++ stateRender state ++ "]") operator position lineColumn state1
         c
           | c >= 128
           , Utf16.validate1 c
@@ -452,7 +456,7 @@ identifierToken !input !startPosition !startLineColumn !position =
       Text.Text
         input
         (coerce startPosition)
-        (coerce position - coerce startPosition) -- just giving us what str.length will in scala.. (other than perhaps the index) -dtw
+        (coerce position - coerce startPosition) -- just giving us what str.length will in scala.. (other than perhaps the position index) 
 
 -- >>> Text.Text (txt2Array (Txt.pack " true")) 1 (5 - 1)
 -- "true"
