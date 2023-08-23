@@ -164,7 +164,7 @@ lex state@State {..}
 
         [UTF16.unit1|
 |] ->
-            trace ("[lex: lexing newln whitespace .. " ++ stateRender state1 ++ "]") (lex state1 {lineColumn = Position.addLine lineColumn})
+            trace ("[lex: lexing newln .. " ++ stateRender state1 ++ "]") (lex state1 {lineColumn = Position.addLine lineColumn})
         -------------------------------------------------------------------------
         -- Number (NOTE: I think he meant 'lambda' here -dtw)
         [UTF16.unit1|\|] ->
