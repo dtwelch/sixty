@@ -209,21 +209,21 @@ lex state@State {..}
           , Utf16.validate1 c
           , c' <- Char.unsafeChr c
           , Char.isSymbol c' || Char.isPunctuation c' ->
-              trace ("HERE1 ")  operator position lineColumn state1
+              trace ("HERE2 ")  operator position lineColumn state1
         c1
           | position1 < end
           , c2 <- index input position1
           , Utf16.validate2 c1 c2
           , c <- Utf16.chr2 c1 c2
           , Char.isAlpha c ->
-              trace ("HERE1 ") identifier position lineColumn state2
+              trace ("HERE3 ") identifier position lineColumn state2
         c1
           | position1 < end
           , c2 <- index input position1
           , Utf16.validate2 c1 c2
           , c <- Utf16.chr2 c1 c2
           , Char.isSymbol c || Char.isPunctuation c ->
-              trace ("HERE1 ")  operator position lineColumn state2
+              trace ("HERE4 ")  operator position lineColumn state2
         -------------------------------------------------------------------------
         -- Error
         _ ->
