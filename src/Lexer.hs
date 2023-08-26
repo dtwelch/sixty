@@ -463,6 +463,50 @@ identifierToken !input !startPosition !startLineColumn !position =
 
 -------------------------------------------------------------------------------
 
+
+
+-- NOTE: they use :=> as the ctor name instead of Arr
+data DSum tag f = forall a. Arr (tag a) (f a)
+  
+data Tag a where
+  AString   :: Tag Text
+  AnInt     :: Tag Int
+  Rec      :: Tag (DSum Tag Identity)
+
+(==>) :: 
+{-
+-- * Types
+
+type Rules f = GenRules f f
+
+type GenRules f g = forall a. f a -> Task g a
+
+newtype Task f a = Task { unTask :: ReaderT (Fetch f) IO a }
+  deriving
+    (Functor, Applicative, Monad, MonadIO, MonadBase IO, MonadFix)
+
+
+-- SCALA:
+type Fetch[F[_]] = [A] => F[A] => IO[A]
+-- HASKELL:
+newtype Fetch f = Fetch (forall a. f a -> IO a)
+
+-- SCALA:
+type Task[F[_], A] = ReaderT[IO, Fetch[F], A]
+-- HASKELL:
+newtype Task f a = Task { unTask :: ReaderT (Fetch f) IO a }
+
+-- SCALA:
+  type GenRules[F[_], G[_]] = /*forall*/ [A] => F[A] => Task[G, A]
+
+-- HASKELL
+type GenRules f g = forall a. f a -> Task g a
+
+-}
+
+-- >>> :t Identity
+-- Identity :: a -> Identity a
+
 operator
   :: Position.Absolute
   -> Position.LineColumn
