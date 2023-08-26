@@ -16,7 +16,10 @@ import qualified Position
 import Protolude hiding (State, ord, state, trace)
 import qualified Span
 import qualified UTF16
-	
+
+-- this module is just messing around with dependent sums based on this implementation:
+-- https://github.com/obsidiansystems/dependent-sum/tree/master
+
 {-
 -- NOTE: they use :=> as the ctor name instead of Arr
 data DSum tag f = forall a. Arr (tag a) (f a)
@@ -25,6 +28,5 @@ data Tag a where
   AString   :: Tag Text
   AnInt     :: Tag Int
   Rec      :: Tag (DSum Tag Identity)
-
-(==>) :: 
 -}
+(==>) :: 
