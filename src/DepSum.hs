@@ -1,3 +1,5 @@
+{-# LANGUAGE GADTs #-}
+
 module DepSum where
 
 import qualified Data.Char as Char
@@ -20,13 +22,22 @@ import qualified UTF16
 -- this module is just messing around with dependent sums based on this implementation:
 -- https://github.com/obsidiansystems/dependent-sum/tree/master
 
-{-
 -- NOTE: they use :=> as the ctor name instead of Arr
 data DSum tag f = forall a. Arr (tag a) (f a)
-  
-data Tag a where
-  AString   :: Tag Text
-  AnInt     :: Tag Int
-  Rec      :: Tag (DSum Tag Identity)
--}
-(==>) :: 
+
+(==>) :: Applicative f => tag a -> a -> DSum tag f 
+(k :: tag a) ==> v = Arr k (pure v)
+
+
+
+
+-- >>> Arr AString (Identity (Txt.pack "hello!"))
+-- No instance for (Show (DSum Tag Identity))
+--   arising from a use of `evalPrint'
+-- There are instances for similar types:
+--   instance [safe] forall k (tag :: k -> Type) (f :: k -> Type).
+--                   (GShow tag, Has' Show tag f) =>
+--                   Show (DSum tag f)
+--     -- Defined in `Data.Dependent.Sum'
+-- In a stmt of an interactive GHCi command: evalPrint it_a6nJ1
+
