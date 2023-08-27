@@ -24,20 +24,15 @@ import qualified UTF16
 
 -- NOTE: they use :=> as the ctor name instead of Arr
 data DSum tag f = forall a. Arr (tag a) (f a)
-
+ --- Arr : \forall a . (tag a)
 (==>) :: Applicative f => tag a -> a -> DSum tag f 
 (k :: tag a) ==> v = Arr k (pure v)
 
+-- see for applicative when time comes: https://typelevel.org/cats/typeclasses/applicative.html
+data Tag a where
+  StringKey :: Tag Text
+  IntKey    :: Tag Int
 
-
-
--- >>> Arr AString (Identity (Txt.pack "hello!"))
--- No instance for (Show (DSum Tag Identity))
---   arising from a use of `evalPrint'
--- There are instances for similar types:
---   instance [safe] forall k (tag :: k -> Type) (f :: k -> Type).
---                   (GShow tag, Has' Show tag f) =>
---                   Show (DSum tag f)
---     -- Defined in `Data.Dependent.Sum'
--- In a stmt of an interactive GHCi command: evalPrint it_a6nJ1
+-- >>> :t Arr StringKey (Identity (Txt.pack "hello!"))
+-- Arr StringKey (Identity (Txt.pack "hello!")) :: DSum Tag Identity
 
